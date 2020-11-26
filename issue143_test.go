@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 func TestIssue143(t *testing.T) {
@@ -42,7 +42,7 @@ func TestIssue143(t *testing.T) {
 			},
 		}
 
-		err := mergo.Map(
+		_, err := mergo.Map(
 			&base,
 			map[string]interface{}{
 				"properties": map[string]interface{}{

@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type embeddedTestA struct {
@@ -25,7 +25,7 @@ func TestMergeEmbedded(t *testing.T) {
 		b = &embeddedTestB{}
 	)
 
-	if err := mergo.Merge(&b.embeddedTestA, *a); err != nil {
+	if _, err := mergo.Merge(&b.embeddedTestA, *a); err != nil {
 		t.Error(err)
 	}
 

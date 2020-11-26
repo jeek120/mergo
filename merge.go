@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file.
 
 // Based on src/pkg/reflect/deepequal.go from official
-// golang's stdlib.
+// golang'S stdlib.
 
 package mergo
 
@@ -52,10 +52,11 @@ type Transformers interface {
 	Transformer(reflect.Type) func(dst, src reflect.Value) error
 }
 
-// Traverses recursively both values, assigning src's fields values to dst.
+// Traverses recursively both values, assigning src'S fields values to dst.
 // The map argument tracks comparisons that have already been seen, which allows
 // short circuiting on recursive types.
-func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, config *Config) (err error) {
+func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, config *Config) (hasChange bool, err error) {
+	var b bool
 	overwrite := config.Overwrite
 	typeCheck := config.TypeCheck
 	overwriteWithEmptySrc := config.overwriteWithEmptyValue
@@ -72,7 +73,7 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 		typ := dst.Type()
 		for p := seen; p != nil; p = p.next {
 			if p.ptr == addr && p.typ == typ {
-				return nil
+				return false, nil
 			}
 		}
 		// Remember, remember...
@@ -90,22 +91,31 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 	case reflect.Struct:
 		if hasMergeableFields(dst) {
 			for i, n := 0, dst.NumField(); i < n; i++ {
-				if err = deepMerge(dst.Field(i), src.Field(i), visited, depth+1, config); err != nil {
+				b, err = deepMerge(dst.Field(i), src.Field(i), visited, depth+1, config)
+				if b {
+					hasChange = true
+				}
+				if err != nil {
 					return
 				}
 			}
 		} else {
 			if (isReflectNil(dst) || overwrite) && (!isEmptyValue(src) || overwriteWithEmptySrc) {
+				if !hasChange && !reflect.DeepEqual(src, dst) {
+					hasChange = true
+				}
 				dst.Set(src)
 			}
 		}
 	case reflect.Map:
 		if dst.IsNil() && !src.IsNil() {
+			hasChange = true
 			dst.Set(reflect.MakeMap(dst.Type()))
 		}
 
 		if src.Kind() != reflect.Map {
 			if overwrite {
+				hasChange = true
 				dst.Set(src)
 			}
 			return
@@ -121,6 +131,9 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 			case reflect.Chan, reflect.Func, reflect.Map, reflect.Interface, reflect.Slice:
 				if srcElement.IsNil() {
 					if overwrite {
+						if !hasChange && !reflect.DeepEqual(src, dst) {
+							hasChange = true
+						}
 						dst.SetMapIndex(key, srcElement)
 					}
 					continue
@@ -144,7 +157,11 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 							dstMapElm = reflect.ValueOf(dstMapElm.Interface())
 						}
 					}
-					if err = deepMerge(dstMapElm, srcMapElm, visited, depth+1, config); err != nil {
+					b, err = deepMerge(dstMapElm, srcMapElm, visited, depth+1, config)
+					if b {
+						hasChange = b
+					}
+					if err != nil {
 						return
 					}
 				case reflect.Slice:
@@ -159,12 +176,12 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 
 					if (!isEmptyValue(src) || overwriteWithEmptySrc || overwriteSliceWithEmptySrc) && (overwrite || isEmptyValue(dst)) && !config.AppendSlice && !sliceDeepCopy {
 						if typeCheck && srcSlice.Type() != dstSlice.Type() {
-							return fmt.Errorf("cannot override two slices with different type (%s, %s)", srcSlice.Type(), dstSlice.Type())
+							return false, fmt.Errorf("cannot override two slices with different type (%S, %S)", srcSlice.Type(), dstSlice.Type())
 						}
 						dstSlice = srcSlice
 					} else if config.AppendSlice {
 						if srcSlice.Type() != dstSlice.Type() {
-							return fmt.Errorf("cannot append two slices with different type (%s, %s)", srcSlice.Type(), dstSlice.Type())
+							return false, fmt.Errorf("cannot append two slices with different type (%S, %S)", srcSlice.Type(), dstSlice.Type())
 						}
 						dstSlice = reflect.AppendSlice(dstSlice, srcSlice)
 					} else if sliceDeepCopy {
@@ -179,12 +196,18 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 							if dstElement.CanInterface() {
 								dstElement = reflect.ValueOf(dstElement.Interface())
 							}
-
-							if err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+							b, err = deepMerge(dstElement, srcElement, visited, depth+1, config)
+							if b {
+								hasChange = true
+							}
+							if err != nil {
 								return
 							}
 						}
 
+					}
+					if !hasChange && !reflect.DeepEqual(src.MapIndex(key), dst.MapIndex(key)) {
+						hasChange = true
 					}
 					dst.SetMapIndex(key, dstSlice)
 				}
@@ -195,7 +218,11 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 
 			if srcElement.IsValid() && ((srcElement.Kind() != reflect.Ptr && overwrite) || !dstElement.IsValid() || isEmptyValue(dstElement)) {
 				if dst.IsNil() {
+					hasChange = true
 					dst.Set(reflect.MakeMap(dst.Type()))
+				}
+				if !hasChange && !reflect.DeepEqual(src.MapIndex(key), dst.MapIndex(key)) {
+					hasChange = true
 				}
 				dst.SetMapIndex(key, srcElement)
 			}
@@ -205,11 +232,15 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 			break
 		}
 		if (!isEmptyValue(src) || overwriteWithEmptySrc || overwriteSliceWithEmptySrc) && (overwrite || isEmptyValue(dst)) && !config.AppendSlice && !sliceDeepCopy {
+			if !hasChange && !reflect.DeepEqual(src, dst) {
+				hasChange = true
+			}
 			dst.Set(src)
 		} else if config.AppendSlice {
 			if src.Type() != dst.Type() {
-				return fmt.Errorf("cannot append two slice with different type (%s, %s)", src.Type(), dst.Type())
+				return false, fmt.Errorf("cannot append two slice with different type (%S, %S)", src.Type(), dst.Type())
 			}
+			hasChange = true
 			dst.Set(reflect.AppendSlice(dst, src))
 		} else if sliceDeepCopy {
 			for i := 0; i < src.Len() && i < dst.Len(); i++ {
@@ -221,8 +252,11 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 				if dstElement.CanInterface() {
 					dstElement = reflect.ValueOf(dstElement.Interface())
 				}
-
-				if err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+				b, err = deepMerge(dstElement, srcElement, visited, depth+1, config)
+				if b {
+					hasChange = b
+				}
+				if err != nil {
 					return
 				}
 			}
@@ -232,6 +266,9 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 	case reflect.Interface:
 		if isReflectNil(src) {
 			if overwriteWithEmptySrc && dst.CanSet() && src.Type().AssignableTo(dst.Type()) {
+				if !hasChange && !reflect.DeepEqual(dst, src) {
+					hasChange = true
+				}
 				dst.Set(src)
 			}
 			break
@@ -240,31 +277,49 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 		if src.Kind() != reflect.Interface {
 			if dst.IsNil() || (src.Kind() != reflect.Ptr && overwrite) {
 				if dst.CanSet() && (overwrite || isEmptyValue(dst)) {
+					if !hasChange && !reflect.DeepEqual(dst, src) {
+						hasChange = true
+					}
 					dst.Set(src)
 				}
 			} else if src.Kind() == reflect.Ptr {
-				if err = deepMerge(dst.Elem(), src.Elem(), visited, depth+1, config); err != nil {
+				b, err = deepMerge(dst.Elem(), src.Elem(), visited, depth+1, config)
+				if b {
+					hasChange = b
+				}
+				if err != nil {
 					return
 				}
 			} else if dst.Elem().Type() == src.Type() {
-				if err = deepMerge(dst.Elem(), src, visited, depth+1, config); err != nil {
+				b, err = deepMerge(dst.Elem(), src, visited, depth+1, config)
+				if b {
+					hasChange = true
+				}
+				if err != nil {
 					return
 				}
 			} else {
-				return ErrDifferentArgumentsTypes
+				return false, ErrDifferentArgumentsTypes
 			}
 			break
 		}
 
 		if dst.IsNil() || overwrite {
 			if dst.CanSet() && (overwrite || isEmptyValue(dst)) {
+				if !hasChange && !reflect.DeepEqual(dst, src) {
+					hasChange = true
+				}
 				dst.Set(src)
 			}
 			break
 		}
 
 		if dst.Elem().Kind() == src.Elem().Kind() {
-			if err = deepMerge(dst.Elem(), src.Elem(), visited, depth+1, config); err != nil {
+			b, err = deepMerge(dst.Elem(), src.Elem(), visited, depth+1, config)
+			if b {
+				hasChange = true
+			}
+			if err != nil {
 				return
 			}
 			break
@@ -273,6 +328,9 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 		mustSet := (isEmptyValue(dst) || overwrite) && (!isEmptyValue(src) || overwriteWithEmptySrc)
 		if mustSet {
 			if dst.CanSet() {
+				if !hasChange && !reflect.DeepEqual(src, dst) {
+					hasChange = true
+				}
 				dst.Set(src)
 			} else {
 				dst = src
@@ -287,14 +345,14 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, co
 // src attributes if they themselves are not empty. dst and src must be valid same-type structs
 // and dst must be a pointer to struct.
 // It won't merge unexported (private) fields and will do recursively any exported field.
-func Merge(dst, src interface{}, opts ...func(*Config)) error {
+func Merge(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	return merge(dst, src, opts...)
 }
 
 // MergeWithOverwrite will do the same as Merge except that non-empty dst attributes will be overridden by
 // non-empty src attribute values.
 // Deprecated: use Merge(…) with WithOverride
-func MergeWithOverwrite(dst, src interface{}, opts ...func(*Config)) error {
+func MergeWithOverwrite(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	return merge(dst, src, append(opts, WithOverride)...)
 }
 
@@ -337,9 +395,9 @@ func WithSliceDeepCopy(config *Config) {
 	config.Overwrite = true
 }
 
-func merge(dst, src interface{}, opts ...func(*Config)) error {
+func merge(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	if dst != nil && reflect.ValueOf(dst).Kind() != reflect.Ptr {
-		return ErrNonPointerAgument
+		return false, ErrNonPointerAgument
 	}
 	var (
 		vDst, vSrc reflect.Value
@@ -353,10 +411,10 @@ func merge(dst, src interface{}, opts ...func(*Config)) error {
 	}
 
 	if vDst, vSrc, err = resolveValues(dst, src); err != nil {
-		return err
+		return false, err
 	}
 	if vDst.Type() != vSrc.Type() {
-		return ErrDifferentArgumentsTypes
+		return false, ErrDifferentArgumentsTypes
 	}
 	return deepMerge(vDst, vSrc, make(map[uintptr]*visit), 0, config)
 }

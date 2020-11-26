@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type Record struct {
@@ -25,7 +25,7 @@ func StructToRecord(in interface{}) *Record {
 		}
 	}
 
-	if err := mergo.Map(&rec.Data, in); err != nil {
+	if _, err := mergo.Map(&rec.Data, in); err != nil {
 		panic(err)
 	}
 	return &rec

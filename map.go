@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file.
 
 // Based on src/pkg/reflect/deepequal.go from official
-// golang's stdlib.
+// golang'S stdlib.
 
 package mergo
 
@@ -28,10 +28,11 @@ func isExported(field reflect.StructField) bool {
 	return r >= 'A' && r <= 'Z'
 }
 
-// Traverses recursively both values, assigning src's fields values to dst.
+// Traverses recursively both values, assigning src'S fields values to dst.
 // The map argument tracks comparisons that have already been seen, which allows
 // short circuiting on recursive types.
-func deepMap(dst, src reflect.Value, visited map[uintptr]*visit, depth int, config *Config) (err error) {
+func deepMap(dst, src reflect.Value, visited map[uintptr]*visit, depth int, config *Config) (hasChange bool, err error) {
+	var b bool
 	overwrite := config.Overwrite
 	if dst.CanAddr() {
 		addr := dst.UnsafeAddr()
@@ -40,7 +41,7 @@ func deepMap(dst, src reflect.Value, visited map[uintptr]*visit, depth int, conf
 		typ := dst.Type()
 		for p := seen; p != nil; p = p.next {
 			if p.ptr == addr && p.typ == typ {
-				return nil
+				return false, nil
 			}
 		}
 		// Remember, remember...
@@ -99,19 +100,22 @@ func deepMap(dst, src reflect.Value, visited map[uintptr]*visit, depth int, conf
 				continue
 			}
 			if srcKind == dstKind {
-				if err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+				if b, err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+					hasChange = hasChange || b
 					return
 				}
 			} else if dstKind == reflect.Interface && dstElement.Kind() == reflect.Interface {
-				if err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+				if b, err = deepMerge(dstElement, srcElement, visited, depth+1, config); err != nil {
+					hasChange = hasChange || b
 					return
 				}
 			} else if srcKind == reflect.Map {
-				if err = deepMap(dstElement, srcElement, visited, depth+1, config); err != nil {
+				if b, err = deepMap(dstElement, srcElement, visited, depth+1, config); err != nil {
+					hasChange = hasChange || b
 					return
 				}
 			} else {
-				return fmt.Errorf("type mismatch on %s field: found %v, expected %v", fieldName, srcKind, dstKind)
+				return false, fmt.Errorf("type mismatch on %s field: found %v, expected %v", fieldName, srcKind, dstKind)
 			}
 		}
 	}
@@ -129,20 +133,20 @@ func deepMap(dst, src reflect.Value, visited map[uintptr]*visit, depth int, conf
 // doesn't apply if dst is a map.
 // This is separated method from Merge because it is cleaner and it keeps sane
 // semantics: merging equal types, mapping different (restricted) types.
-func Map(dst, src interface{}, opts ...func(*Config)) error {
+func Map(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	return _map(dst, src, opts...)
 }
 
 // MapWithOverwrite will do the same as Map except that non-empty dst attributes will be overridden by
 // non-empty src attribute values.
 // Deprecated: Use Map(…) with WithOverride
-func MapWithOverwrite(dst, src interface{}, opts ...func(*Config)) error {
+func MapWithOverwrite(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	return _map(dst, src, append(opts, WithOverride)...)
 }
 
-func _map(dst, src interface{}, opts ...func(*Config)) error {
+func _map(dst, src interface{}, opts ...func(*Config)) (bool, error) {
 	if dst != nil && reflect.ValueOf(dst).Kind() != reflect.Ptr {
-		return ErrNonPointerAgument
+		return false, ErrNonPointerAgument
 	}
 	var (
 		vDst, vSrc reflect.Value
@@ -155,7 +159,7 @@ func _map(dst, src interface{}, opts ...func(*Config)) error {
 	}
 
 	if vDst, vSrc, err = resolveValues(dst, src); err != nil {
-		return err
+		return false, err
 	}
 	// To be friction-less, we redirect equal-type arguments
 	// to deepMerge. Only because arguments can be anything.
@@ -165,14 +169,14 @@ func _map(dst, src interface{}, opts ...func(*Config)) error {
 	switch vSrc.Kind() {
 	case reflect.Struct:
 		if vDst.Kind() != reflect.Map {
-			return ErrExpectedMapAsDestination
+			return false, ErrExpectedMapAsDestination
 		}
 	case reflect.Map:
 		if vDst.Kind() != reflect.Struct {
-			return ErrExpectedStructAsDestination
+			return false, ErrExpectedStructAsDestination
 		}
 	default:
-		return ErrNotSupported
+		return false, ErrNotSupported
 	}
 	return deepMap(vDst, vSrc, make(map[uintptr]*visit), 0, config)
 }

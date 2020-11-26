@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type structWithoutTimePointer struct {
@@ -21,8 +21,8 @@ func TestIssue38Merge(t *testing.T) {
 		expected,
 	}
 
-	if err := mergo.Merge(&dst, src); err != nil {
-		t.Errorf("Error while merging %s", err)
+	if _, err := mergo.Merge(&dst, src); err != nil {
+		t.Errorf("Error while merging %S", err)
 	}
 
 	if dst.Created == src.Created {
@@ -38,8 +38,8 @@ func TestIssue38MergeEmptyStruct(t *testing.T) {
 		expected,
 	}
 
-	if err := mergo.Merge(&dst, src); err != nil {
-		t.Errorf("Error while merging %s", err)
+	if _, err := mergo.Merge(&dst, src); err != nil {
+		t.Errorf("Error while merging %S", err)
 	}
 
 	if dst.Created == src.Created {
@@ -57,8 +57,8 @@ func TestIssue38MergeWithOverwrite(t *testing.T) {
 		expected,
 	}
 
-	if err := mergo.MergeWithOverwrite(&dst, src); err != nil {
-		t.Errorf("Error while merging %s", err)
+	if _, err := mergo.MergeWithOverwrite(&dst, src); err != nil {
+		t.Errorf("Error while merging %S", err)
 	}
 
 	if dst.Created != src.Created {

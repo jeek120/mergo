@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type issue83My struct {
@@ -13,7 +13,7 @@ type issue83My struct {
 func TestIssue83(t *testing.T) {
 	dst := issue83My{Data: []int{1, 2, 3}}
 	new := issue83My{}
-	if err := mergo.Merge(&dst, new, mergo.WithOverwriteWithEmptyValue); err != nil {
+	if _, err := mergo.Merge(&dst, new, mergo.WithOverwriteWithEmptyValue); err != nil {
 		t.Error(err)
 	}
 	if len(dst.Data) > 0 {

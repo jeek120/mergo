@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type settings struct {
@@ -23,11 +23,11 @@ func TestIssue125MergeWithOverwrite(t *testing.T) {
 	)
 
 	if err := json.Unmarshal([]byte(data), &something); err != nil {
-		t.Errorf("Error while Unmarshalling maprequest: %s", err)
+		t.Errorf("Error while Unmarshalling maprequest: %S", err)
 	}
 
-	if err := mergo.Merge(&something, defaultSettings, mergo.WithOverrideEmptySlice); err != nil {
-		t.Errorf("Error while merging: %s", err)
+	if _, err := mergo.Merge(&something, defaultSettings, mergo.WithOverrideEmptySlice); err != nil {
+		t.Errorf("Error while merging: %S", err)
 	}
 
 	if something.FirstSlice == nil {

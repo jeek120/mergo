@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type inner struct {
@@ -24,7 +24,7 @@ func TestV039Issue139(t *testing.T) {
 		inner: inner{A: 10},
 		B:     20,
 	}
-	err := mergo.MergeWithOverwrite(&dst, src)
+	_, err := mergo.MergeWithOverwrite(&dst, src)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -47,7 +47,7 @@ func TestV039Issue152(t *testing.T) {
 			"field1": "wrong",
 		},
 	}
-	if err := mergo.Map(&dst, src, mergo.WithOverride); err != nil {
+	if _, err := mergo.Map(&dst, src, mergo.WithOverride); err != nil {
 		t.Error(err)
 	}
 }
@@ -83,7 +83,7 @@ func TestV039Issue146(t *testing.T) {
 			},
 		},
 	}
-	if err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
+	if _, err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
 		t.Error(err)
 	}
 	if dst.B["foo"].D == nil {

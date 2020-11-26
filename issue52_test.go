@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type structWithTime struct {
@@ -47,7 +47,7 @@ func TestOverwriteZeroSrcTime(t *testing.T) {
 	dst := structWithTime{now}
 	src := structWithTime{}
 
-	if err := mergo.MergeWithOverwrite(&dst, src); err != nil {
+	if _, err := mergo.MergeWithOverwrite(&dst, src); err != nil {
 		t.FailNow()
 	}
 
@@ -61,7 +61,7 @@ func TestOverwriteZeroSrcTimeWithTransformer(t *testing.T) {
 	dst := structWithTime{now}
 	src := structWithTime{}
 
-	if err := mergo.MergeWithOverwrite(&dst, src, mergo.WithTransformers(timeTransfomer{true})); err != nil {
+	if _, err := mergo.MergeWithOverwrite(&dst, src, mergo.WithTransformers(timeTransfomer{true})); err != nil {
 		t.FailNow()
 	}
 
@@ -75,7 +75,7 @@ func TestOverwriteZeroDstTime(t *testing.T) {
 	dst := structWithTime{}
 	src := structWithTime{now}
 
-	if err := mergo.MergeWithOverwrite(&dst, src); err != nil {
+	if _, err := mergo.MergeWithOverwrite(&dst, src); err != nil {
 		t.FailNow()
 	}
 
@@ -89,7 +89,7 @@ func TestZeroDstTime(t *testing.T) {
 	dst := structWithTime{}
 	src := structWithTime{now}
 
-	if err := mergo.Merge(&dst, src); err != nil {
+	if _, err := mergo.Merge(&dst, src); err != nil {
 		t.FailNow()
 	}
 
@@ -103,7 +103,7 @@ func TestZeroDstTimeWithTransformer(t *testing.T) {
 	dst := structWithTime{}
 	src := structWithTime{now}
 
-	if err := mergo.Merge(&dst, src, mergo.WithTransformers(timeTransfomer{})); err != nil {
+	if _, err := mergo.Merge(&dst, src, mergo.WithTransformers(timeTransfomer{})); err != nil {
 		t.FailNow()
 	}
 

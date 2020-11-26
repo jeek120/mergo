@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type DstStructIssue84 struct {
@@ -30,7 +30,7 @@ func TestIssue84MergeMapWithNilValueToStructWithOverride(t *testing.T) {
 		"A": 3, "B": 4, "C": 0,
 	}
 
-	if err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
+	if _, err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
 		t.Errorf("Error during the merge: %v", err)
 	}
 
@@ -47,7 +47,7 @@ func TestIssue84MergeMapWithoutKeyExistsToStructWithOverride(t *testing.T) {
 		"A": 3, "B": 4,
 	}
 
-	if err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
+	if _, err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
 		t.Errorf("Error during the merge: %v", err)
 	}
 
@@ -72,7 +72,7 @@ func TestIssue84MergeNestedMapWithNilValueToStructWithOverride(t *testing.T) {
 		}, "B": 4, "C": 0,
 	}
 
-	if err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
+	if _, err := mergo.Map(&p1, p2, mergo.WithOverride); err != nil {
 		t.Errorf("Error during the merge: %v", err)
 	}
 

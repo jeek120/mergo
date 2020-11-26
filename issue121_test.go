@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 func TestIssue121WithSliceDeepCopy(t *testing.T) {
@@ -21,7 +21,7 @@ func TestIssue121WithSliceDeepCopy(t *testing.T) {
 		},
 	}
 
-	if err := mergo.Merge(&dst, src, mergo.WithSliceDeepCopy); err != nil {
+	if _, err := mergo.Merge(&dst, src, mergo.WithSliceDeepCopy); err != nil {
 		t.Errorf("Error during the merge: %v", err)
 	}
 

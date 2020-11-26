@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 func TestIssue123(t *testing.T) {
@@ -19,7 +19,7 @@ func TestIssue123(t *testing.T) {
 	}
 
 	// Expected behavior
-	if err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
+	if _, err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
 		t.Fatal(err)
 	}
 	testCases := []struct {

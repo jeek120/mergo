@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type Student struct {
@@ -28,9 +28,9 @@ func issue64Data() []issue64TestData {
 
 func TestIssue64MergeSliceWithOverride(t *testing.T) {
 	for _, data := range issue64Data() {
-		err := mergo.Merge(&data.S2, data.S1, mergo.WithOverride)
+		_, err := mergo.Merge(&data.S2, data.S1, mergo.WithOverride)
 		if err != nil {
-			t.Errorf("Error while merging %s", err)
+			t.Errorf("Error while merging %S", err)
 		}
 
 		if len(data.S2.Books) != len(data.ExpectedSlice) {

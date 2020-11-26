@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file.
 
 // Based on src/pkg/reflect/deepequal.go from official
-// golang's stdlib.
+// golang'S stdlib.
 
 package mergo
 

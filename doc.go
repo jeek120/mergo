@@ -18,36 +18,36 @@ Please keep in mind that a problematic PR broke 0.3.9. We reverted it in 0.3.10.
 
 Keep in mind that in 0.3.2, Mergo changed Merge() and Map() signatures to support transformers. We added an optional/variadic argument so that it won't break the existing code.
 
-If you were using Mergo before April 6th, 2015, please check your project works as intended after updating your local copy with go get -u github.com/imdario/mergo. I apologize for any issue caused by its previous behavior and any future bug that Mergo could cause in existing projects after the change (release 0.2.0).
+If you were using Mergo before April 6th, 2015, please check your project works as intended after updating your local copy with go get -u github.com/jeek120/mergo. I apologize for any issue caused by its previous behavior and any future bug that Mergo could cause in existing projects after the change (release 0.2.0).
 
 Install
 
 Do your usual installation procedure:
 
-    go get github.com/imdario/mergo
+    go get github.com/jeek120/mergo
 
     // use in your .go code
     import (
-        "github.com/imdario/mergo"
+        "github.com/jeek120/mergo"
     )
 
 Usage
 
 You can only merge same-type structs with exported fields initialized as zero value of their type and same-types maps. Mergo won't merge unexported (private) fields but will do recursively any exported one. It won't merge empty structs value as they are zero values too. Also, maps will be merged recursively except for structs inside maps (because they are not addressable using Go reflection).
 
-	if err := mergo.Merge(&dst, src); err != nil {
+	if _, err := mergo.Merge(&dst, src); err != nil {
 		// ...
 	}
 
 Also, you can merge overwriting values using the transformer WithOverride.
 
-	if err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
+	if _, err := mergo.Merge(&dst, src, mergo.WithOverride); err != nil {
 		// ...
 	}
 
 Additionally, you can map a map[string]interface{} to a struct (and otherwise, from struct to map), following the same restrictions as in Merge(). Keys are capitalized to find each corresponding exported field.
 
-	if err := mergo.Map(&dst, srcMap); err != nil {
+	if _, err := mergo.Map(&dst, srcMap); err != nil {
 		// ...
 	}
 
@@ -59,7 +59,7 @@ Here is a nice example:
 
 	import (
 		"fmt"
-		"github.com/imdario/mergo"
+		"github.com/jeek120/mergo"
 	)
 
 	type Foo struct {
@@ -89,7 +89,7 @@ Transformers allow to merge specific types differently than in the default behav
 
 	import (
 		"fmt"
-		"github.com/imdario/mergo"
+		"github.com/jeek120/mergo"
 			"reflect"
 			"time"
 	)

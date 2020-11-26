@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type testStruct struct {
@@ -15,7 +15,7 @@ func TestIssue50Merge(t *testing.T) {
 	to := testStruct{}
 	from := testStruct{}
 
-	if err := mergo.Merge(&to, from); err != nil {
+	if _, err := mergo.Merge(&to, from); err != nil {
 		t.Fail()
 	}
 }

@@ -1,4 +1,4 @@
-module github.com/imdario/mergo
+module github.com/jeek120/mergo
 
 go 1.13
 

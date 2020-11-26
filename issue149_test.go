@@ -3,7 +3,7 @@ package mergo_test
 import (
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type user struct {
@@ -27,7 +27,7 @@ func TestIssue149(t *testing.T) {
 		User:  nil,
 		Token: &tokenValue,
 	}
-	if err := mergo.Merge(dest, src, mergo.WithOverwriteWithEmptyValue); err != nil {
+	if _, err := mergo.Merge(dest, src, mergo.WithOverwriteWithEmptyValue); err != nil {
 		t.Error(err)
 	}
 	if dest.User != nil {

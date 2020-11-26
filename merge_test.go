@@ -1,10 +1,11 @@
 package mergo_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/imdario/mergo"
+	"github.com/jeek120/mergo"
 )
 
 type transformer struct {
@@ -19,24 +20,188 @@ func (s *transformer) Transformer(t reflect.Type) func(dst, src reflect.Value) e
 }
 
 type foo struct {
-	s   string
+	S   string
 	Bar *bar
 }
 
 type bar struct {
-	i int
-	s map[string]string
+	I int
+	S map[string]string
+}
+
+func (b *bar) String() string {
+	return fmt.Sprintf("{I: %d, S: %+v}", b.I, b.S)
+}
+
+func TestEqual(t *testing.T) {
+	old := foo{}
+	a := foo{}
+	b := foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	want := true
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo"}
+	a = foo{S: "foo"}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100}}
+	a = foo{S: "foo", Bar: &bar{I: 100}}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1"}}}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v3"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo", Bar: &bar{I: 101, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo1", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	want = false
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo"}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo", Bar: &bar{I: 100}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("合并的hasChange结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("change结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
+
+	old = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	a = foo{S: "foo", Bar: &bar{I: 100, S: map[string]string{"k1": "v1", "k2": "v2"}}}
+	b = foo{Bar: &bar{S: map[string]string{"k1": "v1"}}}
+
+	if hasChange, err := mergo.Merge(&a, &b); err != nil || hasChange != want {
+		if err != nil {
+			t.Error(err)
+		}
+		if want != hasChange {
+			t.Errorf("change结果是%v,希望是%v，before:%+v, after:%+v", hasChange, want, old, a)
+		}
+	}
 }
 
 func TestMergeWithTransformerNilStruct(t *testing.T) {
-	a := foo{s: "foo"}
-	b := foo{Bar: &bar{i: 2, s: map[string]string{"foo": "bar"}}}
+	a := foo{S: "foo"}
+	b := foo{Bar: &bar{I: 2, S: map[string]string{"foo": "bar"}}}
 
-	if err := mergo.Merge(&a, &b, mergo.WithOverride, mergo.WithTransformers(&transformer{
+	if _, err := mergo.Merge(&a, &b, mergo.WithOverride, mergo.WithTransformers(&transformer{
 		m: map[reflect.Type]func(dst, src reflect.Value) error{
 			reflect.TypeOf(&bar{}): func(dst, src reflect.Value) error {
 				// Do sthg with Elem
-				t.Log(dst.Elem().FieldByName("i"))
+				t.Log(dst.Elem().FieldByName("I"))
 				t.Log(src.Elem())
 				return nil
 			},
@@ -45,8 +210,8 @@ func TestMergeWithTransformerNilStruct(t *testing.T) {
 		t.Error(err)
 	}
 
-	if a.s != "foo" {
-		t.Errorf("b not merged in properly: a.s.Value(%s) != expected(%s)", a.s, "foo")
+	if a.S != "foo" {
+		t.Errorf("b not merged in properly: a.S.Value(%s) != expected(%s)", a.S, "foo")
 	}
 
 	if a.Bar == nil {
@@ -56,18 +221,18 @@ func TestMergeWithTransformerNilStruct(t *testing.T) {
 
 func TestMergeNonPointer(t *testing.T) {
 	dst := bar{
-		i: 1,
+		I: 1,
 	}
 	src := bar{
-		i: 2,
-		s: map[string]string{
+		I: 2,
+		S: map[string]string{
 			"a": "1",
 		},
 	}
 	want := mergo.ErrNonPointerAgument
 
-	if got := mergo.Merge(dst, src); got != want {
-		t.Errorf("want: %s, got: %s", want, got)
+	if _, got := mergo.Merge(dst, src); got != want {
+		t.Errorf("want: %S, got: %S", want, got)
 	}
 }
 
@@ -75,14 +240,14 @@ func TestMapNonPointer(t *testing.T) {
 	dst := make(map[string]bar)
 	src := map[string]bar{
 		"a": {
-			i: 2,
-			s: map[string]string{
+			I: 2,
+			S: map[string]string{
 				"a": "1",
 			},
 		},
 	}
 	want := mergo.ErrNonPointerAgument
-	if got := mergo.Merge(dst, src); got != want {
-		t.Errorf("want: %s, got: %s", want, got)
+	if _, got := mergo.Merge(dst, src); got != want {
+		t.Errorf("want: %S, got: %S", want, got)
 	}
 }
